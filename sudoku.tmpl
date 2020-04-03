@@ -13,6 +13,8 @@
 FirstName LastName <email@domain.example>
 FirstName LastName <email@domain.example>
 
+Rafael Diaz Cruz <diazcruz@sonoma.edu>
+
 ---- PRELIMINARIES ----
 
 >> If you have any preliminary comments on your submission, notes for the
@@ -21,6 +23,15 @@ FirstName LastName <email@domain.example>
 >> Please cite any offline or online sources you consulted while
 >> preparing your submission, other than the Pintos documentation, course
 >> text, lecture notes, and course staff.
+
+1. I used this to get basic idea 
+https://www.geeksforgeeks.org/fork-system-call/ 
+2. How to use wait and waitpid better
+http://poincare.matf.bg.ac.rs/~ivana/courses/ps/sistemi_knjige/pomocno/apue/APUE/0201433079/ch08lev1sec6.html
+3. I original thought of using signals but I couldn't get it to work 
+http://alumni.cs.ucr.edu/~kishore/cs153/signals.c
+4. This had all the thread info I needed
+https://www.cs.cmu.edu/afs/cs/academic/class/15492-f07/www/pthreads.html
 
                THREADED SUDOKU CHECKER
                =======================
@@ -31,22 +42,43 @@ FirstName LastName <email@domain.example>
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+struct Data {
+	char (*board)[9];
+	int row;
+	int col;
+	int x;
+	int y;
+	int invalidRow;
+	int invalidCol;
+	int invalidCel;
+};
+
+Contains pointer to board, the row, column, cel position and a flagfor validity
+
 ---- ALGORITHMS ----
 
 >> A2: Briefly describe how you communicated to each worker thread
 >> the work it should perform, as a void *
 
+I set the position of either the row, column, or cell in the structwith the for loop and then passed it with thread_create()
+
 >> A3: Briefly describe the function(s) run by each worker. Explain
 if you could reduce the number of functions, by generalizing each
 problem in some way.
+
+There are 27 workers total for the threads. They use the function I passed to them to check the board row, column or cell validity by using a for loop to check that all numbers are present.
 
 ---- SYNCHRONIZATION ----
 
 >> A4: Explain how the main thread knows when all the worker
 >> threads have completed their work.
 
+Iterating pthread_join at the end of thread_create() calls 27 times
+
 >> A5: Explain how the main thread knows when a particular worker
 >> thread has reported a property is missing.
+
+The flag in the struct was set to true.
 
 ---- RATIONALE ----
 
@@ -55,9 +87,19 @@ problem in some way.
 >> Explain why you chose your design, arguing how it is highly 
 >> parallel, while the access to each resource is safe and deadlock free.
 
+My original design was very serialized, however with your help I 
+was able to use an array of structs that had a struct for each 
+thread. This helped remove the problem of threads not sharing
+changes that each one made. This also keeps each own variables 
+safe from change by other threads, and since they all have copies
+of the resources, they don't have to fight for them.
+
 >> A7: Explain how you ensured that your program has no resource leaks.
 >> List all the free-able resources and, for each, explain how you
 >> free them at the earliest possible time.
+
+The arrays are statically allocated so they will be removed once
+the program ends.
 
 
                FORKING SUDOKU CHECKER
@@ -69,25 +111,54 @@ problem in some way.
 >> `struct' member, global or static variable, `typedef', or
 >> enumeration.  Identify the purpose of each in 25 words or less.
 
+struct Data {
+	char (*board)[9];
+	int row;
+	int col;
+	int x;
+	int y;
+	int invalidRow;
+	int invalidCol;
+	int invalidCel;
+};
+
+Contains pointer to board, the row, column, cel position and a flagfor validity
+
+
+
 ---- ALGORITHMS ----
 
 >> B2: Briefly describe if the method of communicating to each child
 thread or the function(s) run by each child was different than in
 your threaded implementation.
 
+I had to create another function that had a return type of void
+instead of void* as well as taking the struct Data parameter 
+instead of the void* d. 
+
 ---- SYNCHRONIZATION ----
 
 >> B3: Explain how the parent process knows when all the worker
 >> threads have completed their work.
 
+Iterating the wait() function at the end of the fork() calls
+
 >> B4: Explain how the parent process knows when a particular worker
 >> thread has reported a property is missing.
+
+The flag in the struct was set to true. However, because the fork()
+creates its own copy of the struct aside from the one that was 
+given, I used a array of pids and used the pid returned from wait
+and the value set by it as indicators for which thread and what
+flag to set true.
 
 ---- RATIONALE ----
 
 >> B5: Explain how you ensured that your program has no resource leaks.
 >> List all the free-able resources and, for each, explain how you
 >> free them at the earliest possible time.
+
+Just like threads, all arrays were created statically 
 
 
 
@@ -103,11 +174,21 @@ the quarter.
 >> In your opinion, was this assignment, or any one of the problems
 >> in it, too easy or too hard?  Did it take too long or too little time?
 
+It was just fine I think. Although most of my time was spend on 
+reading and figuring out how to write the code rather than actually
+typing it. It wasnt' too hard to do but I definitely had to read 
+about it
+
 >> Did you find that working on a particular part of the assignment gave
 >> you greater insight into some aspect of OS design?
+
+Yes very much so. And maybe for some other class assignments.
 
 >> Is there some particular fact or hint we should give students in
 >> future quarters to help them solve the problems?  Conversely, did you
 >> find any of our guidance to be misleading?
+
+Give them websites to look at and no you're guidance wasn't
+misleading.
 
 >> Any other comments?

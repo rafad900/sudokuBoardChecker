@@ -12,5 +12,5 @@ check: sudoku.x
 	for t in tests/*; do ./sudoku.x --fork < $$t; done
 
 clean:
-	rm -f sudoku.x
+	rm -f *.x *.out
 

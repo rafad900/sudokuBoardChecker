@@ -28,7 +28,7 @@ Rafael Diaz Cruz <diazcruz@sonoma.edu>
 https://www.geeksforgeeks.org/fork-system-call/ 
 2. How to use wait and waitpid better
 http://poincare.matf.bg.ac.rs/~ivana/courses/ps/sistemi_knjige/pomocno/apue/APUE/0201433079/ch08lev1sec6.html
-3. I original thought of using signals but I couldn't get it to work 
+3. I originally thought of using signals but I couldn't get it to work 
 http://alumni.cs.ucr.edu/~kishore/cs153/signals.c
 4. This had all the thread info I needed
 https://www.cs.cmu.edu/afs/cs/academic/class/15492-f07/www/pthreads.html
@@ -90,9 +90,9 @@ The flag in the struct was set to true.
 My original design was very serialized, however with your help I 
 was able to use an array of structs that had a struct for each 
 thread. This helped remove the problem of threads not sharing
-changes that each one made. This also keeps each own variables 
+changes that each one made. This also keeps variables 
 safe from change by other threads, and since they all have copies
-of the resources, they don't have to fight for them.
+of the resources, they don't have to synchronize to work on them.
 
 >> A7: Explain how you ensured that your program has no resource leaks.
 >> List all the free-able resources and, for each, explain how you
@@ -132,9 +132,10 @@ Contains pointer to board, the row, column, cel position and a flagfor validity
 thread or the function(s) run by each child was different than in
 your threaded implementation.
 
-I had to create another function that had a return type of void
-instead of void* as well as taking the struct Data parameter 
-instead of the void* d. 
+I used the same function from the one used in threads for the forks. 
+I just had to make sure that the object that I was passing in was of
+the correct type since the compiler wouldn't complain. This was a 
+small program so problems were easily caught and fixed. 
 
 ---- SYNCHRONIZATION ----
 

@@ -1,5 +1,5 @@
 CFLAGS=-g
-LDFLAGS=-lpthread
+LDFLAGS=-pthread
 CC=gcc
 
 all: sudoku.x

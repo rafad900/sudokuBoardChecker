@@ -5,11 +5,12 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 
 /* These are the only two global variables allowed in your program */
 static int verbose = 0;
 static int use_fork = 0;
-
 
 struct Data {
 	char (*board)[9];
@@ -60,7 +61,11 @@ void read_board(char b[][9]) {
 	int x = 0, y = 0;
 	scanf("%c", &c);
 	while(1) {
-		if(isdigit(c)) {
+        if(isdigit(c)) {
+            if ((int)c < 0 || (int)c > 9) {
+                printf("The file has out of range inputs\n");
+                exit(1);
+            }
 			b[x][y] = c;
 			y++;
 			if (y == 9) {
@@ -87,15 +92,6 @@ void* checkrow (void* row) {
 	return NULL;
 }
 
-void checkrowf (struct Data *d) {
-	int v [9] = {0,0,0,0,0,0,0,0,0};
-	for (int i = 0; i < 9; i++) {
-		int pos = d->board[d->row][i]-49;
-		if (!v[pos])
-			v[pos] = 1;
-		else d->invalidRow = 1;	
-	}
-}
 // Checks the columns of the board
 void* checkcolumn (void* column) {
 	struct Data* d = (struct Data *)column;
@@ -109,42 +105,20 @@ void* checkcolumn (void* column) {
 	return NULL;
 }
 
-void checkcolumnf (struct Data *d) {
-	int v [9] = {0,0,0,0,0,0,0,0,0};
-	for (int i = 0; i < 9; i++) {
-		int pos = d->board[i][d->col]-49;
-		if (!v[pos]) 
-			v[pos] = 1;
-		else d->invalidCol = 1;
-	}	
-}
 // Checks the cells of the board
 void* checkcell (void* cell) {
 	struct Data* d = (struct Data *)cell;
 	int v [9] = {0,0,0,0,0,0,0,0,0};
-	// Divisible by 3 
 	for (int x=d->x; x < d->x+3; x++) {
 		for (int y=d->y; y < d->y+3; y++) {
 			int pos = d->board[x][y]-49;
 			if (!v[pos]) 
 				v[pos] = 1;
-			else d->invalidCel = 1;
+			else 
+                d->invalidCel = 1;
 		}
 	}
 	return NULL;
-}
-
-void checkcellf (struct Data *d) {
-	int v [9] = {0,0,0,0,0,0,0,0,0};
-	// Divisible by 3 
-	for (int x=d->x; x < d->x+3; x++) {
-		for (int y=d->y; y < d->y+3; y++) {
-			int pos = d->board[x][y]-49;
-			if (!v[pos]) 
-				v[pos] = 1;
-			else d->invalidCel = 1;
-		}
-	}
 }
 
 // Gets everything running
@@ -181,7 +155,7 @@ int main(int argc, char *argv[])
 				d[r].row = r;
 				parent = fork();
 				if (parent == 0) {
-					checkrowf(&d[r]);
+					checkrow(&d[r]);
 					if (d[r].invalidRow == 1)
 						exit(1);
 					else 
@@ -191,7 +165,7 @@ int main(int argc, char *argv[])
 				d[r].col = r-9;
 				parent = fork();
 				if (parent == 0) {
-					checkcolumnf(&d[r]);
+					checkcolumn(&d[r]);
 					if (d[r].invalidCol == 1)
 						exit(2);
 					else 
@@ -201,7 +175,7 @@ int main(int argc, char *argv[])
 				d[r].x = _x, d[r].y = _y;
 				parent = fork();
 				if (parent == 0) {
-					checkcellf(&d[r]);
+					checkcell(&d[r]);
 					if (d[r].invalidCel == 1)
 						exit(3);
 					else 
@@ -255,7 +229,6 @@ int main(int argc, char *argv[])
 					_x+=3;
 				}
 			}
-
 		}
 		// Join all the threads
 		for (int z = 0; z < 27; z++) {
@@ -272,22 +245,22 @@ int main(int argc, char *argv[])
 	int invalid_board = 0;
 	for (int a = 0; a < 27; a++) {
 		if (d[a].invalidRow) {
-			printf("Row %i doesn't have the required values.\n", d[a].row);
+			printf("Row %i doesn't have the required values.\n", d[a].row + 1);
 			invalid_board = 1;
 		}
 		if (d[a].invalidCol) {
-			printf("Column %i doens't have the required values.\n", d[a].col);
+			printf("Column %i doens't have the required values.\n", d[a].col + 1);
 			invalid_board = 1;
 		}
 		if (d[a].invalidCel) {
 			const char * xpos;
 			const char * ypos;
-			if (d[a].x == 0) { xpos = "left"; }
+			if (d[a].x == 0) { xpos = "top"; }
 			if (d[a].x == 3) { xpos = "middle"; }
-			if (d[a].x == 6) { xpos = "right"; }
-			if (d[a].y == 0) { ypos = "top"; }
+			if (d[a].x == 6) { xpos = "bottom"; }
+			if (d[a].y == 0) { ypos = "left"; }
 			if (d[a].y == 3) { ypos = "middle"; }
-			if (d[a].y == 6) { ypos = "bottom"; }
+			if (d[a].y == 6) { ypos = "right"; }
 			printf("Cell %s %s doesn't have the required values.\n", xpos, ypos);
 			invalid_board = 1;
 		}
